@@ -4,21 +4,15 @@ This application serves as a mission-critical integration bridge between a core 
 * **Scale:** Processing hundreds of automated employment offers, end dates, and short work breaks every semester.
 * ***Note:** The source code for this project is owned by my employer, so I am unable to share it publicly.*
 
-## The Challenge: Unreliable Legacy Code
+## Unreliable Legacy Code
 The university previously relied on an automated employment loader that, while functionally complex, had become brittle, difficult to maintain, and prone to edge-case bugs. 
 
 The system wasn't flexible enough to easily absorb new business requirements. Additionally, critical operational updates, such as automatically setting job end dates, were entirely out of scope for the old system, requiring heavy manual overhead from staff. 
 
 The objective shifted from a simple patch job to an **architectural redesign**: replacing the current system with an extensible, deterministic, and highly testable integration engine.
 
-## Technical Architecture: A Layered, Domain-Driven CLI
+## A Layered, Domain-Driven CLI
 To ensure the new application could seamlessly scale to handle different employee types and operation types without decaying into spaghetti code, I implemented a modular, layered architecture with a strict separation of concerns.
-
-~~~
-[Entry Point] ──> [Command Layer] ──> [Service Layer] ──> [Adapter Layer]
-                                                     │                     │
-                                             (Business Logic)      (PeopleSoft / APIs)
-~~~
 
 ### 1. Decoupled Architectural Layers
 *   **Entry Point:** Handles CLI argument parsing using `argparse` and bootstraps the application's configuration. It evaluates environment and runtime flags to determine configuration states.
@@ -44,12 +38,12 @@ The hardest phase of development was translating ambiguous, complex business rul
 
 I solved this in two ways. First, by writing Oracle SQL queries to pull the initial pool of potential records from the database. Second, by implementing strict validation checks inside the **Service Layer**. For example, the system queries updatable records and explicitly verifies if an employee has conflicting open timesheets *before* allowing a PeopleSoft commit to occur.
 
-### 2. Fault Tolerance and Graceful Degradation
+### 2. Graceful Degradation
 Enterprise integrations cannot afford to crash halfway through a batch of hundreds of records because a single row contains bad data. 
 
 I implemented robust exception handling to manage partial failures. If a record triggers a PeopleSoft validation error partway through a run, the application catches the exception, logs the failure details, flags it explicitly for human review in the final Excel report, and seamlessly proceeds to process the next record.
 
-### 3. Bulletproof Testing with `pytest`
+### 3. Testing with `pytest`
 Because database connections and API clients are instantiated at the application root and passed down via **Dependency Injection**, the core business logic is completely decoupled from the network. This allowed me to build a comprehensive unit testing suite using `pytest`, ensuring that complex validation algorithms could be verified safely using mock clients rather than live production data.
 
 ## Results & Impact
